@@ -1,0 +1,15 @@
+[Unit]
+Description=Macvlan interface
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/ip link add macvlan0 link eth0 type macvlan mode bridge
+ExecStart=/sbin/ip addr add 192.168.50.248/24 dev macvlan0
+ExecStart=/sbin/ip link set macvlan0 up
+ExecStop=/sbin/ip link del macvlan0
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
