@@ -1,36 +1,20 @@
 #!/usr/bin/env bash
 
-# ---
-
 SERVICE_FILE="macvlan0.service"
 SERVICE_PATH="/etc/systemd/system/$SERVICE_FILE"
 
 echo "Setting up macvlan service"
-
 if [ ! -L "$SERVICE_PATH" ]; then
-    echo "Symlinking service to $SERVICE_PATH"
     ln -s "$(pwd)/$SERVICE_FILE" "$SERVICE_PATH"
-else
-    echo "Symlink already exists"
 fi
-
-if systemctl is-active --quiet "$SERVICE_FILE"; then
-    echo "Stopping service"
-    systemctl stop "$SERVICE_FILE"
-fi
-
-echo "Enabling and starting service"
 systemctl enable "$SERVICE_FILE"
-systemctl start "$SERVICE_FILE"
-
-echo "Macvlan service set up"
+systemctl restart "$SERVICE_FILE"
 
 # ---
 
 MACVLAN_NET="macvlan"
 
 echo "Setting up macvlan docker network"
-
 if ! docker network ls --format '{{.Name}}' | grep -q "^$MACVLAN_NET\$"; then
     docker network create -d macvlan \
         --subnet=192.168.50.0/24 \
@@ -38,24 +22,13 @@ if ! docker network ls --format '{{.Name}}' | grep -q "^$MACVLAN_NET\$"; then
         --gateway=192.168.50.1 \
         -o parent=eth0 \
         "$MACVLAN_NET"
-    echo "Docker network created"
-else
-    echo "Docker network already exists"
 fi
-
-echo "Macvlan docker network set up"
 
 # ---
 
 TRAEFIK_NET="traefik"
 
 echo "Setting up traefik docker network"
-
 if ! docker network ls --format '{{.Name}}' | grep -q "^$TRAEFIK_NET\$"; then
     docker network create "$TRAEFIK_NET"
-    echo "Docker network created"
-else
-    echo "Docker network already exists"
 fi
-
-echo "Traefik docker network set up"
